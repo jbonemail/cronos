@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Cronos natación</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* ====== BASE ====== */
+        :root {
+            --bg: #f2f2f2;
+            --panel: #ffffff;
+            --border: #d0d0d0;
+            --accent: #005f9e;
+            --accent-active: #018642;
+            --danger: #b12020;
+            --warn: #ff9800;
+            --lane-header-bg: #dfe8f1;
+            --text: #000;
+        }
+
+        /* ====== THEME: ACUÁTICO ====== */
+        body.theme-aqua {
+            --bg: #edf4f7;
+            --panel: #ffffff;
+            --border: #c8dce5;
+            --accent: #006ea8;
+            --accent-active: #028f4a;
+            --danger: #d2202f;
+            --warn: #ff9800;
+            --lane-header-bg: #d0e7f2;
+            --text: #062233;
+        }
+
+        /* ====== THEME: ALTO CONTRASTE ====== */
+        body.theme-contrast {
+            --bg: #ffffff;
+            --panel: #ffffff;
+            --border: #000000;
+            --accent: #000000;
+            --accent-active: #1b7b1b;
+            --danger: #c20000;
+            --warn: #d67a00;
+            --lane-header-bg: #f5f5f5;
+            --text: #000000;
+        }
+
+        /* ====== THEME: OSCURO (LO USAMOS POR DEFECTO) ====== */
+        body.theme-dark {
+            --bg: #1b1f24;
+            --panel: #2a3036;
+            --border: #3a4148;
+            --accent: #66aaff;
+            --accent-active: #46c476;
+            --danger: #ff6363;
+            --warn: #ffb347;
+            --lane-header-bg: #3a4752;
+            --text: #ffffff;
+        }
+
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            background: var(--bg);
+            line-height: 1.3;
+            color: var(--text);
+        }
+        header {
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+        h1 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin: 0;
+        }
+        header a {
+            font-size: 0.7rem;
+            text-decoration: none;
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .container {
+            padding: 8px 12px 40px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 6px 6px 8px 6px;
+            margin-bottom: 8px;
+        }
+        .panel-title {
+            font-weight: 700;
+            margin-bottom: 4px;
+            font-size: 0.75rem;
+        }
+        .narrow-panel {
+            max-width: 520px;
+        }
+        label {
+            display: inline-block;
+            margin-right: 6px;
+            margin-bottom: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        select {
+            padding: 3px 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            border: 1px solid #bbb;
+            border-radius: 4px;
+        }
+        input[type="number"],
+        input[type="text"] {
+            padding: 3px 4px;
+            border: 1px solid #bbb;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: #fff;
+        }
+        body.theme-dark input[type="number"],
+        body.theme-dark input[type="text"],
+        body.theme-dark select {
+            background: #1f2429;
+            color: #fff;
+            border-color: #4f5964;
+        }
+        button {
+            padding: 3px 6px;
+            border: none;
+            border-radius: 3px;
+            background: var(--accent);
+            color: #fff;
+            cursor: pointer;
+            font-size: 0.68rem;
+            font-weight: 700;
+            transition: background 0.15s, box-shadow 0.15s;
+        }
+        button.small-btn {
+            padding: 2px 6px;
+            min-width: 26px;
+        }
+        button.danger { background: var(--danger); }
+        button.warn { background: var(--warn); }
+        button.btn-active {
+            background: var(--accent-active) !important;
+            box-shadow: 0 0 5px rgba(0,0,0,0.4);
+        }
+        .small {
+            font-size: 0.62rem;
+            color: #555;
+            font-weight: 500;
+        }
+        body.theme-dark .small {
+            color: #c7c7c7;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--panel);
+        }
+        thead th {
+            background: #e6e6e6;
+            border-bottom: 1px solid var(--border);
+            padding: 3px 2px;
+            text-align: center;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #000;
+        }
+        body.theme-dark thead th {
+            background: #3a4148;
+            color: #fff;
+        }
+        tbody td {
+            border-bottom: 1px solid #eee;
+            padding: 2px 2px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        body.theme-dark tbody td {
+            border-bottom: 1px solid #3a4148;
+        }
+        .lane-header {
+            background: var(--lane-header-bg);
+            font-weight: 700;
+        }
+        .lane-header td {
+            text-align: left;
+            padding-left: 4px;
+        }
+        .time-cell {
+            font-family: monospace;
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+        .row-inline {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            align-items: center;
+        }
+        .row-inline > * { margin-right: 4px; }
+        .lane-buttons button {
+            margin-right: 4px;
+            margin-bottom: 4px;
+        }
+        #summaryPanel .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 3px 4px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            margin-bottom: 4px;
+        }
+        #summaryPanel .summary-name {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        #summaryPanel .summary-time {
+            font-family: monospace;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        body.compact table,
+        body.compact th,
+        body.compact td {
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+        body.compact .panel { padding: 5px 5px 6px 5px; }
+
+        @media (max-width: 750px) {
+            .row-inline {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            table, th, td { font-size: 0.72rem; }
+            .narrow-panel { max-width: 100%; }
+        }
+    </style>
+</head>
+<body class="theme-dark">
+<header>
+    <h1>Cronos Natación</h1>
+    <a href="#manual">Manual de uso</a>
+</header>
+<div class="container">
+
+    <!-- CONFIG INICIAL -->
+    <div class="panel">
+        <div class="panel-title">Config inicial</div>
+        <div class="row-inline">
+            <label>And:
+                <!-- por defecto 2 -->
+                <input type="number" id="lanesInput" min="1" max="12" value="2">
+            </label>
+            <label>Nad/and:
+                <!-- por defecto 4 -->
+                <input type="number" id="swimmersInput" min="1" max="10" value="4">
+            </label>
+            <label>Tema:
+                <select id="themeSelect">
+                    <option value="theme-aqua">Acuático</option>
+                    <option value="theme-contrast">Alto contraste</option>
+                    <option value="theme-dark" selected>Oscuro</option>
+                </select>
+            </label>
+            <button id="buildBtn">OK</button>
+        </div>
+        <div class="small">Después elegí la distancia.</div>
+    </div>
+
+    <!-- DISTANCIAS -->
+    <div class="panel" id="distancePanel" style="display:none;">
+        <div class="panel-title">Distancia</div>
+        <div class="row-inline">
+            <button class="small-btn" data-dist="40">40</button>
+            <button class="small-btn" data-dist="100">100</button>
+            <button class="small-btn" data-dist="200">200</button>
+            <button class="small-btn" data-dist="400">400</button>
+            <label>Otra:
+                <input type="number" id="customDistance" min="1" style="width:70px;">
+            </label>
+            <button id="applyCustomDistance" class="small-btn">OK</button>
+        </div>
+        <div class="small">Al cambiar se limpian tiempos.</div>
+    </div>
+
+    <!-- SALIDAS POR POSICIÓN -->
+    <div class="panel" id="actionsPanel" style="display:none;">
+        <div class="panel-title">Salidas por posición</div>
+        <div class="row-inline">
+            <div class="lane-buttons" id="posButtons"></div>
+        </div>
+    </div>
+
+    <!-- ACTIVOS -->
+    <div class="panel narrow-panel" id="activePanel" style="display:none;">
+        <div class="panel-title">Activos</div>
+        <table>
+            <tbody id="activeBody"></tbody>
+        </table>
+    </div>
+
+    <!-- RESUMEN -->
+    <div class="panel narrow-panel" id="summaryPanel" style="display:none;">
+        <div class="panel-title">Resumen</div>
+        <div id="summaryBody"></div>
+    </div>
+
+    <!-- GUARDAR / RESET -->
+    <div class="panel" id="exportPanel" style="display:none;">
+        <div class="panel-title">Guardar / reset</div>
+        <div class="row-inline">
+            <button id="exportCsvBtn">CSV</button>
+            <button id="exportHtmlBtn">HTML</button>
+            <button id="resetActBtn" class="warn">Reset act</button>
+            <button id="resetBtn" class="danger">Reset</button>
+        </div>
+    </div>
+
+    <!-- + NAD -->
+    <div class="panel" id="laneAddPanel" style="display:none;">
+        <div class="panel-title">+ Nad</div>
+        <div class="row-inline" id="laneAddButtons"></div>
+    </div>
+
+    <!-- TABLA COMPLETA -->
+    <table id="timesTable" style="display:none;">
+        <thead>
+        <tr>
+            <th style="width:10%">And</th>
+            <th>Nombre</th>
+            <th style="width:12%">Dist</th>
+            <th style="width:10%">S</th>
+            <th style="width:10%">F</th>
+            <th style="width:15%">t</th>
+        </tr>
+        </thead>
+        <tbody id="timesBody"></tbody>
+    </table>
+
+    <!-- MANUAL -->
+    <div class="panel" id="manual">
+        <div class="panel-title">Manual de uso</div>
+        <ol class="small" style="line-height:1.4;">
+            <li><b>Config inicial:</b> definís andariveles, nadadores y tema. “OK”.</li>
+            <li><b>Distancia:</b> elegís una fija o cargás otra.</li>
+            <li><b>Salidas 1,2,3…:</b> larga a todos los de esa posición.</li>
+            <li><b>Activos:</b> los que siguen nadando. Tocá “F” ahí.</li>
+            <li><b>Resumen:</b> muestra solo nombre y tiempo, grande.</li>
+            <li><b>Podés cambiar nombres en cualquier momento.</b></li>
+        </ol>
+    </div>
+</div>
+
+<script>
+    var timesData = [];
+    var lanesCount = 0;
+    var baseSwimmersPerLane = 0;
+    var currentDistance = 0;
+
+    var buildBtn = document.getElementById('buildBtn');
+    var lanesInput = document.getElementById('lanesInput');
+    var swimmersInput = document.getElementById('swimmersInput');
+    var themeSelect = document.getElementById('themeSelect');
+
+    var distancePanel = document.getElementById('distancePanel');
+    var customDistance = document.getElementById('customDistance');
+    var applyCustomDistance = document.getElementById('applyCustomDistance');
+
+    var actionsPanel = document.getElementById('actionsPanel');
+    var posButtons = document.getElementById('posButtons');
+
+    var activePanel = document.getElementById('activePanel');
+    var activeBody = document.getElementById('activeBody');
+
+    var summaryPanel = document.getElementById('summaryPanel');
+    var summaryBody = document.getElementById('summaryBody');
+
+    var exportPanel = document.getElementById('exportPanel');
+    var exportCsvBtn = document.getElementById('exportCsvBtn');
+    var exportHtmlBtn = document.getElementById('exportHtmlBtn');
+    var resetBtn = document.getElementById('resetBtn');
+    var resetActBtn = document.getElementById('resetActBtn');
+
+    var laneAddPanel = document.getElementById('laneAddPanel');
+    var laneAddButtons = document.getElementById('laneAddButtons');
+
+    var timesTable = document.getElementById('timesTable');
+    var timesBody = document.getElementById('timesBody');
+
+    var audioCtx = null, audioReady = false;
+    document.body.addEventListener('click', function initOnce() {
+        try {
+            var AC = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AC();
+            audioReady = true;
+        } catch (e) {
+            audioReady = false;
+        }
+        document.body.removeEventListener('click', initOnce);
+    });
+
+    function playBeep() {
+        if (!audioReady || !audioCtx) return;
+        var o = audioCtx.createOscillator();
+        var g = audioCtx.createGain();
+        o.type = 'sine';
+        o.frequency.value = 880;
+        g.gain.setValueAtTime(0.25, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+        o.connect(g);
+        g.connect(audioCtx.destination);
+        o.start();
+        o.stop(audioCtx.currentTime + 0.15);
+    }
+
+    function flashButton(btn) {
+        if (!btn) return;
+        btn.classList.add('btn-active');
+        setTimeout(function () {
+            btn.classList.remove('btn-active');
+        }, 180);
+    }
+
+    function enableCompact() {
+        document.body.classList.add('compact');
+    }
+
+    themeSelect.addEventListener('change', function () {
+        applyTheme(themeSelect.value);
+    });
+
+    function applyTheme(themeName) {
+        document.body.classList.remove('theme-aqua', 'theme-contrast', 'theme-dark');
+        document.body.classList.add(themeName);
+    }
+
+    buildBtn.addEventListener('click', function () {
+        var oldData = timesData;
+        var oldDistance = currentDistance;
+
+        lanesCount = parseInt(lanesInput.value, 10) || 1;
+        baseSwimmersPerLane = parseInt(swimmersInput.value, 10) || 1;
+
+        timesData = [];
+        for (var l = 0; l < lanesCount; l++) {
+            var laneArr = [];
+            for (var s = 0; s < baseSwimmersPerLane; s++) {
+                var prev = (oldData[l] && oldData[l][s]) ? oldData[l][s] : null;
+                laneArr.push({
+                    name: prev ? prev.name : ((l + 1) + '_N' + (s + 1)),  // ← nombre default con andarivel
+                    start: null,
+                    end: null,
+                    distance: prev ? (prev.distance || oldDistance || 0) : (oldDistance || 0)
+                });
+            }
+            timesData.push(laneArr);
+        }
+        currentDistance = oldDistance || 0;
+
+        renderTable();
+        renderPositionButtons();
+        renderLaneAddButtons();
+        renderActiveList();
+        renderSummary();
+
+        distancePanel.style.display = 'block';
+        actionsPanel.style.display = 'block';
+        exportPanel.style.display = 'block';
+        laneAddPanel.style.display = 'block';
+        activePanel.style.display = 'block';
+        summaryPanel.style.display = 'block';
+    });
+
+    distancePanel.addEventListener('click', function (e) {
+        if (e.target && e.target.dataset && e.target.dataset.dist) {
+            var d = parseInt(e.target.dataset.dist, 10);
+            applyDistanceToAll(d);
+        }
+    });
+
+    applyCustomDistance.addEventListener('click', function () {
+        var d = parseInt(customDistance.value, 10);
+        if (!isNaN(d) && d > 0) {
+            applyDistanceToAll(d);
+        }
+    });
+
+    function applyDistanceToAll(dist) {
+        currentDistance = dist;
+        for (var l = 0; l < timesData.length; l++) {
+            for (var s = 0; s < timesData[l].length; s++) {
+                timesData[l][s].distance = dist;
+                timesData[l][s].start = null;
+                timesData[l][s].end = null;
+            }
+        }
+        renderTable();
+        renderActiveList();
+        renderSummary();
+        renderPositionButtons();
+    }
+
+    function renderTable() {
+        timesBody.innerHTML = '';
+        for (var l = 0; l < timesData.length; l++) {
+            var laneTr = document.createElement('tr');
+            laneTr.className = 'lane-header';
+            var laneTd = document.createElement('td');
+            laneTd.colSpan = 6;
+            laneTd.textContent = 'Andarivel ' + (l + 1);
+            laneTr.appendChild(laneTd);
+            timesBody.appendChild(laneTr);
+
+            for (var s = 0; s < timesData[l].length; s++) {
+                var sw = timesData[l][s];
+                var tr = document.createElement('tr');
+
+                var tdEmpty = document.createElement('td');
+                tdEmpty.textContent = '';
+                tr.appendChild(tdEmpty);
+
+                var tdName = document.createElement('td');
+                var nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.value = sw.name;
+                nameInput.style.width = '85px';
+                nameInput.setAttribute('data-lane', l);
+                nameInput.setAttribute('data-swimmer', s);
+                nameInput.onchange = handleNameChange;
+                tdName.appendChild(nameInput);
+                tr.appendChild(tdName);
+
+                var tdDist = document.createElement('td');
+                tdDist.textContent = sw.distance || 0;
+                tr.appendChild(tdDist);
+
+                var tdStart = document.createElement('td');
+                var startBtn = document.createElement('button');
+                startBtn.textContent = 'S';
+                startBtn.className = 'small-btn';
+                startBtn.setAttribute('data-lane', l);
+                startBtn.setAttribute('data-swimmer', s);
+                startBtn.onclick = handleStartClick;
+                tdStart.appendChild(startBtn);
+                var startSpan = document.createElement('div');
+                startSpan.className = 'small';
+                startSpan.id = 'start-' + l + '-' + s;
+                startSpan.textContent = sw.start ? formatClock(sw.start) : '00:00:00';
+                tdStart.appendChild(startSpan);
+                tr.appendChild(tdStart);
+
+                var tdEnd = document.createElement('td');
+                var endBtn = document.createElement('button');
+                endBtn.textContent = 'F';
+                endBtn.className = 'small-btn';
+                endBtn.setAttribute('data-lane', l);
+                endBtn.setAttribute('data-swimmer', s);
+                endBtn.onclick = handleEndClick;
+                tdEnd.appendChild(endBtn);
+                var endSpan = document.createElement('div');
+                endSpan.className = 'small';
+                endSpan.id = 'end-' + l + '-' + s;
+                endSpan.textContent = sw.end ? formatClock(sw.end) : '00:00:00';
+                tdEnd.appendChild(endSpan);
+                tr.appendChild(tdEnd);
+
+                var tdTime = document.createElement('td');
+                tdTime.id = 'time-' + l + '-' + s;
+                tdTime.className = 'time-cell';
+                tdTime.textContent = (sw.start && sw.end) ? formatDuration(sw.end - sw.start) : '00:00.00';
+                tr.appendChild(tdTime);
+
+                timesBody.appendChild(tr);
+            }
+        }
+        timesTable.style.display = 'table';
+    }
+
+    function renderActiveList() {
+        activeBody.innerHTML = '';
+        var hasActive = false;
+        for (var l = 0; l < timesData.length; l++) {
+            var laneHas = false;
+            for (var s = 0; s < timesData[l].length; s++) {
+                if (timesData[l][s].start !== null && timesData[l][s].end === null) {
+                    laneHas = true;
+                    break;
+                }
+            }
+            if (!laneHas) continue;
+            hasActive = true;
+
+            var laneTr = document.createElement('tr');
+            laneTr.className = 'lane-header';
+            var laneTd = document.createElement('td');
+            laneTd.colSpan = 3;
+            laneTd.textContent = 'Andarivel ' + (l + 1);
+            laneTr.appendChild(laneTd);
+            activeBody.appendChild(laneTr);
+
+            for (var s2 = 0; s2 < timesData[l].length; s2++) {
+                var sw2 = timesData[l][s2];
+                if (sw2.start !== null && sw2.end === null) {
+                    var tr = document.createElement('tr');
+                    tr.className = 'active-row';
+
+                    var tdName = document.createElement('td');
+                    tdName.className = 'active-name';
+                    tdName.textContent = sw2.name || '';
+                    tr.appendChild(tdName);
+
+                    var tdSpace = document.createElement('td');
+                    tdSpace.textContent = '';
+                    tr.appendChild(tdSpace);
+
+                    var tdBtn = document.createElement('td');
+                    var btn = document.createElement('button');
+                    btn.textContent = 'F';
+                    btn.className = 'small-btn';
+                    btn.setAttribute('data-lane', l);
+                    btn.setAttribute('data-swimmer', s2);
+                    btn.onclick = handleEndClick;
+                    tdBtn.appendChild(btn);
+                    tr.appendChild(tdBtn);
+
+                    activeBody.appendChild(tr);
+                }
+            }
+        }
+        activePanel.style.display = hasActive ? 'block' : 'none';
+    }
+
+    function renderSummary() {
+        summaryBody.innerHTML = '';
+        var hasFinished = false;
+        for (var l = 0; l < timesData.length; l++) {
+            for (var s = 0; s < timesData[l].length; s++) {
+                var sw = timesData[l][s];
+                if (sw.start !== null && sw.end !== null) {
+                    hasFinished = true;
+                    var div = document.createElement('div');
+                    div.className = 'summary-item';
+                    var nameSpan = document.createElement('span');
+                    nameSpan.className = 'summary-name';
+                    nameSpan.textContent = sw.name || '';
+                    var timeSpan = document.createElement('span');
+                    timeSpan.className = 'summary-time';
+                    timeSpan.textContent = formatDuration(sw.end - sw.start);
+                    div.appendChild(nameSpan);
+                    div.appendChild(timeSpan);
+                    summaryBody.appendChild(div);
+                }
+            }
+        }
+        summaryPanel.style.display = hasFinished ? 'block' : 'none';
+    }
+
+    function renderPositionButtons() {
+        posButtons.innerHTML = '';
+        var maxPos = getMaxSwimmersAcrossLanes();
+        for (var p = 0; p < maxPos; p++) {
+            (function (idx) {
+                var btn = document.createElement('button');
+                btn.textContent = idx + 1;
+                btn.className = 'small-btn';
+                btn.onclick = function () {
+                    playBeep();
+                    flashButton(btn);
+                    enableCompact();
+                    startPosition(idx);
+                };
+                posButtons.appendChild(btn);
+            })(p);
+        }
+    }
+
+    function startPosition(posIndex) {
+        var now = Date.now();
+        for (var l = 0; l < timesData.length; l++) {
+            if (timesData[l][posIndex]) {
+                setStartTime(l, posIndex, now);
+            }
+        }
+        renderActiveList();
+    }
+
+    function renderLaneAddButtons() {
+        laneAddButtons.innerHTML = '';
+        for (var l = 0; l < timesData.length; l++) {
+            (function (laneIndex) {
+                var btn = document.createElement('button');
+                btn.textContent = '+' + (laneIndex + 1);
+                btn.className = 'small-btn';
+                btn.onclick = function () {
+                    timesData[laneIndex].push({
+                        name: (laneIndex + 1) + '_N' + (timesData[laneIndex].length + 1),  // ← también acá
+                        start: null,
+                        end: null,
+                        distance: currentDistance
+                    });
+                    renderTable();
+                    renderPositionButtons();
+                    renderActiveList();
+                    renderSummary();
+                };
+                laneAddButtons.appendChild(btn);
+            })(l);
+        }
+    }
+
+    function handleNameChange(e) {
+        var l = parseInt(e.target.getAttribute('data-lane'), 10);
+        var s = parseInt(e.target.getAttribute('data-swimmer'), 10);
+        timesData[l][s].name = e.target.value;
+        renderActiveList();
+        renderSummary();
+    }
+
+    function handleStartClick(e) {
+        var l = parseInt(e.target.getAttribute('data-lane'), 10);
+        var s = parseInt(e.target.getAttribute('data-swimmer'), 10);
+        playBeep();
+        flashButton(e.target);
+        enableCompact();
+        setStartTime(l, s, Date.now());
+        renderActiveList();
+    }
+
+    function handleEndClick(e) {
+        var l = parseInt(e.target.getAttribute('data-lane'), 10);
+        var s = parseInt(e.target.getAttribute('data-swimmer'), 10);
+        playBeep();
+        flashButton(e.target);
+        setEndTime(l, s, Date.now());
+        renderActiveList();
+        renderSummary();
+    }
+
+    function setStartTime(l, s, ts) {
+        timesData[l][s].start = ts;
+        var sp = document.getElementById('start-' + l + '-' + s);
+        if (sp) sp.textContent = formatClock(ts);
+        var tc = document.getElementById('time-' + l + '-' + s);
+        if (tc) tc.textContent = '00:00.00';
+    }
+
+    function setEndTime(l, s, ts) {
+        timesData[l][s].end = ts;
+        var sp = document.getElementById('end-' + l + '-' + s);
+        if (sp) sp.textContent = formatClock(ts);
+        showDuration(l, s);
+    }
+
+    function showDuration(l, s) {
+        var sw = timesData[l][s];
+        var tc = document.getElementById('time-' + l + '-' + s);
+        if (sw.start && sw.end) {
+            tc.textContent = formatDuration(sw.end - sw.start);
+        } else {
+            tc.textContent = '00:00.00';
+        }
+    }
+
+    resetBtn.addEventListener('click', function () {
+        if (!confirm('Resetear todos los tiempos?')) return;
+        for (var l = 0; l < timesData.length; l++) {
+            for (var s = 0; s < timesData[l].length; s++) {
+                timesData[l][s].start = null;
+                timesData[l][s].end = null;
+            }
+        }
+        renderTable();
+        renderActiveList();
+        renderPositionButtons();
+        renderSummary();
+    });
+
+    resetActBtn.addEventListener('click', function () {
+        for (var l = 0; l < timesData.length; l++) {
+            for (var s = 0; s < timesData[l].length; s++) {
+                var sw = timesData[l][s];
+                if (sw.start !== null && sw.end === null) {
+                    sw.start = null;
+                    sw.end = null;
+                }
+            }
+        }
+        renderTable();
+        renderActiveList();
+        renderSummary();
+    });
+
+    exportCsvBtn.addEventListener('click', function () {
+        var csv = 'andarivel,nadador,distancia,salida,fin,tiempo\n';
+        for (var l = 0; l < timesData.length; l++) {
+            for (var s = 0; s < timesData[l].length; s++) {
+                var sw = timesData[l][s];
+                var startStr = sw.start ? formatClock(sw.start) : '00:00:00';
+                var endStr = sw.end ? formatClock(sw.end) : '00:00:00';
+                var durStr = (sw.start && sw.end) ? formatDuration(sw.end - sw.start) : '00:00.00';
+                csv += (l + 1) + ',"' + (sw.name || '') + '",' + (sw.distance || 0) + ',' + startStr + ',' + endStr + ',' + durStr + '\n';
+            }
+        }
+        downloadFile(csv, 'text/csv', 'resultados_natacion.csv');
+    });
+
+    exportHtmlBtn.addEventListener('click', function () {
+        var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Resultados natación</title></head><body>';
+        html += '<h2>Resultados de natación</h2><table border="1" cellpadding="4" cellspacing="0">';
+        html += '<tr><th>And</th><th>Nombre</th><th>Dist</th><th>Salida</th><th>Fin</th><th>t</th></tr>';
+        for (var l = 0; l < timesData.length; l++) {
+            for (var s = 0; s < timesData[l].length; s++) {
+                var sw = timesData[l][s];
+                var startStr = sw.start ? formatClock(sw.start) : '00:00:00';
+                var endStr = sw.end ? formatClock(sw.end) : '00:00:00';
+                var durStr = (sw.start && sw.end) ? formatDuration(sw.end - sw.start) : '00:00.00';
+                html += '<tr><td>' + (l + 1) + '</td><td>' + escapeHtml(sw.name || '') + '</td><td>' + (sw.distance || 0) + '</td><td>' + startStr + '</td><td>' + endStr + '</td><td>' + durStr + '</td></tr>';
+            }
+        }
+        html += '</table><p>Generado: ' + new Date().toLocaleString() + '</p></body></html>';
+        downloadFile(html, 'text/html', 'resultados_natacion.html');
+    });
+
+    function getMaxSwimmersAcrossLanes() {
+        var max = 0;
+        for (var l = 0; l < timesData.length; l++) {
+            if (timesData[l].length > max) max = timesData[l].length;
+        }
+        return max;
+    }
+
+    function formatClock(ts) {
+        var d = new Date(ts);
+        return pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
+    }
+
+    function formatDuration(ms) {
+        if (ms < 0) ms = 0;
+        var total = Math.floor(ms / 1000);
+        var m = Math.floor(total / 60);
+        var s = total % 60;
+        var c = Math.floor((ms % 1000) / 10);
+        return pad2(m) + ':' + pad2(s) + '.' + pad2(c);
+    }
+
+    function pad2(n) {
+        return (n < 10 ? '0' : '') + n;
+    }
+
+    function downloadFile(content, mime, filename) {
+        var blob = new Blob([content], {type: mime});
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 1000);
+    }
+
+    function escapeHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+</script>
+</body>
+</html>
