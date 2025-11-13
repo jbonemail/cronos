@@ -75,7 +75,7 @@ body.compact .panel{padding:5px 5px 6px}
       <label>Tema:
         <select id="themeSelect">
           <option value="theme-aqua">Acuático</option>
-          <option value="theme-contrast">Alto contraste</option>
+          <option value="theme-contrast">Alto contraste</</option>
           <option value="theme-dark" selected>Oscuro</option>
         </select>
       </label>
@@ -149,14 +149,14 @@ body.compact .panel{padding:5px 5px 6px}
       <li><b>Distancia:</b> fija u otra.</li>
       <li><b>Salidas 1,2,3…:</b> larga a todos los de esa posición.</li>
       <li><b>Activos:</b> ves el tiempo en vivo. <b>INT</b> marca intervalos. <b>F</b> finaliza.</li>
-      <li><b>Resumen:</b> muestra nombre, tiempo y los <b>intervalos</b>.</li>
+      <li><b>Resumen:</b> muestra nombre, tiempo, <b>intervalos</b> y <b>puesto</b> cuando terminan todos.</li>
     </ol>
   </div>
 </div>
 
 <script>
 /* ===== Datos ===== */
-var timesData = [];      // [lane][swimmer] = {name,start,end,distance,splits:[]}
+var timesData = [];      // [lane][swimmer] = {name,start,end,distance,splits:[],place}
 var lanesCount = 0, baseSwimmersPerLane = 0, currentDistance = 0;
 
 /* ===== DOM ===== */
@@ -216,7 +216,8 @@ buildBtn.addEventListener('click',function(){
         name: prev?prev.name:((l+1)+'_N'+(s+1)),
         start:null,end:null,
         distance: prev?(prev.distance||oldDist||0):(oldDist||0),
-        splits: prev && prev.splits ? prev.splits.slice() : []
+        splits: prev && prev.splits ? prev.splits.slice() : [],
+        place: null
       });
     }
     timesData.push(arr);
@@ -247,7 +248,7 @@ function applyDistanceToAll(d){
   for(var l=0;l<timesData.length;l++){
     for(var s=0;s<timesData[l].length;s++){
       var sw=timesData[l][s];
-      sw.distance=d; sw.start=null; sw.end=null; sw.splits=[];
+      sw.distance=d; sw.start=null; sw.end=null; sw.splits=[]; sw.place=null;
     }
   }
   renderTable(); renderActiveList(); renderSummary(); renderPositionButtons();
@@ -304,7 +305,6 @@ function ensureLiveLoop(){
   if(liveTimer) return;
   liveTimer=setInterval(function(){
     var now=Date.now();
-    // actualiza todos los spans .live con data-l y data-s
     var nodes=document.getElementsByClassName('live');
     for(var i=0;i<nodes.length;i++){
       var n=nodes[i];
@@ -362,14 +362,43 @@ function renderActiveList(){
   if(has) ensureLiveLoop();
 }
 
-/* ===== Resumen (incluye splits) ===== */
+/* ===== Cálculo de puestos ===== */
+function computePlaces(){
+  var totalStarted=0,totalFinished=0;
+  var arr=[], l, s, sw;
+
+  // reset de place y armado de lista
+  for(l=0;l<timesData.length;l++){
+    for(s=0;s<timesData[l].length;s++){
+      sw=timesData[l][s];
+      sw.place=null;
+      if(sw.start!==null){
+        totalStarted++;
+        if(sw.end!==null){
+          totalFinished++;
+          arr.push({l:l,s:s,time:sw.end-sw.start});
+        }
+      }
+    }
+  }
+  if(totalStarted>0 && totalFinished===totalStarted){
+    arr.sort(function(a,b){return a.time-b.time;});
+    for(var i=0;i<arr.length;i++){
+      timesData[arr[i].l][arr[i].s].place = i+1;
+    }
+  }
+}
+
+/* ===== Resumen (incluye splits y puesto) ===== */
 function renderSummary(){
+  computePlaces(); // actualiza puestos si corresponde
+
   summaryBody.innerHTML='';
   var any=false;
   for(var l=0;l<timesData.length;l++){
     for(var s=0;s<timesData[l].length;s++){
       var sw=timesData[l][s];
-      if(sw.start!==null){ // mostrar aunque no haya finalizado, así se ven los INT
+      if(sw.start!==null){
         any=true;
         var div=document.createElement('div'); div.className='summary-item';
 
@@ -377,14 +406,15 @@ function renderSummary(){
 
         var right=document.createElement('div'); right.className='summary-time';
         var main = (sw.start&&sw.end)?formatDuration(sw.end-sw.start):'—';
+        if(sw.place){ main = main + '  P' + sw.place; }
         right.appendChild(document.createTextNode(main)); div.appendChild(right);
 
         summaryBody.appendChild(div);
 
-        // Splits
         if(sw.splits && sw.splits.length){
           var p=document.createElement('div'); p.className='splits';
-          var arr=[]; for(var k=0;k<sw.splits.length;k++){arr.push(formatDuration(sw.splits[k]-sw.start));}
+          var arr=[], k;
+          for(k=0;k<sw.splits.length;k++){arr.push(formatDuration(sw.splits[k]-sw.start));}
           p.appendChild(document.createTextNode('INT: '+arr.join(' | '))); summaryBody.appendChild(p);
         }
       }
@@ -420,7 +450,7 @@ function renderLaneAddButtons(){
     (function(li){
       var b=document.createElement('button'); b.className='small-btn'; b.appendChild(document.createTextNode('+'+(li+1)));
       b.onclick=function(){
-        timesData[li].push({name:(li+1)+'_N'+(timesData[li].length+1),start:null,end:null,distance:currentDistance,splits:[]});
+        timesData[li].push({name:(li+1)+'_N'+(timesData[li].length+1),start:null,end:null,distance:currentDistance,splits:[],place:null});
         renderTable(); renderPositionButtons(); renderActiveList(); renderSummary();
       };
       laneAddButtons.appendChild(b);
@@ -442,18 +472,23 @@ function handleEndClick(e){
   setEndTime(l,s,Date.now()); renderActiveList(); renderSummary();
 }
 function handleSplitClick(e){
+  var l=parseInt(e.getAttribute ? e.getAttribute('data-lane') : e.target.getAttribute('data-lane'),10);
+}
+
+/* corregimos handleSplitClick real */
+function handleSplitClick(e){
   var l=parseInt(e.target.getAttribute('data-lane'),10), s=parseInt(e.target.getAttribute('data-swimmer'),10);
   var sw=timesData[l][s];
   if(sw.start!==null && sw.end===null){
     if(!sw.splits) sw.splits=[];
     sw.splits.push(Date.now());
-    renderSummary(); // mostrar el nuevo INT debajo
+    renderSummary();
   }
 }
 
 /* ===== Setters de tiempo ===== */
 function setStartTime(l,s,ts){
-  var sw=timesData[l][s]; sw.start=ts; sw.end=null; sw.splits=[];
+  var sw=timesData[l][s]; sw.start=ts; sw.end=null; sw.splits=[]; sw.place=null;
   var sp=document.getElementById('start-'+l+'-'+s); if(sp) sp.innerHTML=formatClock(ts);
   var tc=document.getElementById('time-'+l+'-'+s); if(tc) tc.innerHTML='00:00.00';
 }
@@ -466,17 +501,17 @@ function setEndTime(l,s,ts){
 /* ===== Reset ===== */
 resetBtn.addEventListener('click',function(){
   if(!confirm('Resetear todos los tiempos?'))return;
-  for(var l=0;l<timesData.length;l++){for(var s=0;s<timesData[l].length;s++){var sw=timesData[l][s]; sw.start=null; sw.end=null; sw.splits=[];}}
+  for(var l=0;l<timesData.length;l++){for(var s=0;s<timesData[l].length;s++){var sw=timesData[l][s]; sw.start=null; sw.end=null; sw.splits=[]; sw.place=null;}}
   renderTable(); renderActiveList(); renderPositionButtons(); renderSummary();
 });
 resetActBtn.addEventListener('click',function(){
-  for(var l=0;l<timesData.length;l++){for(var s=0;s<timesData[l].length;s++){var sw=timesData[l][s]; if(sw.start!==null&&sw.end===null){sw.start=null; sw.end=null; sw.splits=[];}}}
+  for(var l=0;l<timesData.length;l++){for(var s=0;s<timesData[l].length;s++){var sw=timesData[l][s]; if(sw.start!==null&&sw.end===null){sw.start=null; sw.end=null; sw.splits=[]; sw.place=null;}}}
   renderTable(); renderActiveList(); renderSummary();
 });
 
 /* ===== Export ===== */
 exportCsvBtn.addEventListener('click',function(){
-  var csv='andarivel,nadador,distancia,salida,fin,tiempo,intervalos\n';
+  var csv='andarivel,nadador,distancia,salida,fin,tiempo,intervalos,puesto\n';
   for(var l=0;l<timesData.length;l++){
     for(var s=0;s<timesData[l].length;s++){
       var sw=timesData[l][s];
@@ -485,7 +520,8 @@ exportCsvBtn.addEventListener('click',function(){
       var durStr=(sw.start&&sw.end)?formatDuration(sw.end-sw.start):'';
       var ints='';
       if(sw.splits&&sw.start){var tmp=[];for(var k=0;k<sw.splits.length;k++){tmp.push(formatDuration(sw.splits[k]-sw.start));}ints=tmp.join(' | ');}
-      csv+=(l+1)+',"'+(sw.name||'')+'",'+(sw.distance||0)+','+startStr+','+endStr+','+durStr+',"'+ints+'"\n';
+      var placeStr=sw.place?sw.place:'';
+      csv+=(l+1)+',"'+(sw.name||'')+'",'+(sw.distance||0)+','+startStr+','+endStr+','+durStr+',"'+ints+'",'+placeStr+'\n';
     }
   }
   downloadFile(csv,'text/csv','resultados_natacion.csv');
@@ -493,7 +529,7 @@ exportCsvBtn.addEventListener('click',function(){
 exportHtmlBtn.addEventListener('click',function(){
   var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Resultados natación</title></head><body>';
   html+='<h2>Resultados de natación</h2><table border="1" cellpadding="4" cellspacing="0">';
-  html+='<tr><th>And</th><th>Nombre</th><th>Dist</th><th>Salida</th><th>Fin</th><th>t</th><th>intervalos</th></tr>';
+  html+='<tr><th>And</th><th>Nombre</th><th>Dist</th><th>Salida</th><th>Fin</th><th>t</th><th>intervalos</th><th>Puesto</th></tr>';
   for(var l=0;l<timesData.length;l++){
     for(var s=0;s<timesData[l].length;s++){
       var sw=timesData[l][s];
@@ -502,7 +538,8 @@ exportHtmlBtn.addEventListener('click',function(){
       var durStr=(sw.start&&sw.end)?formatDuration(sw.end-sw.start):'';
       var ints='';
       if(sw.splits&&sw.start){var tmp=[];for(var k=0;k<sw.splits.length;k++){tmp.push(formatDuration(sw.splits[k]-sw.start));}ints=tmp.join(' | ');}
-      html+='<tr><td>'+(l+1)+'</td><td>'+escapeHtml(sw.name||'')+'</td><td>'+(sw.distance||0)+'</td><td>'+startStr+'</td><td>'+endStr+'</td><td>'+durStr+'</td><td>'+escapeHtml(ints)+'</td></tr>';
+      var placeStr=sw.place?sw.place:'';
+      html+='<tr><td>'+(l+1)+'</td><td>'+escapeHtml(sw.name||'')+'</td><td>'+(sw.distance||0)+'</td><td>'+startStr+'</td><td>'+endStr+'</td><td>'+durStr+'</td><td>'+escapeHtml(ints)+'</td><td>'+placeStr+'</td></tr>';
     }
   }
   html+='</table><p>Generado: '+new Date().toLocaleString()+'</p></body></html>';
@@ -516,7 +553,7 @@ function downloadFile(content,mime,filename){
   setTimeout(function(){document.body.removeChild(a); URL.revokeObjectURL(url);},1000);
 }
 
-/* inicia loop de live cuando haga falta */
+/* loop de live */
 ensureLiveLoop();
 </script>
 </body>
