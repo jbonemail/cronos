@@ -49,6 +49,11 @@ body.theme-dark tbody td{border-bottom:1px solid #3a4148}
 #summaryPanel .summary-time{font-family:monospace;font-weight:700;font-size:1rem}
 #summaryPanel .splits{margin:2px 0 6px 0;font-family:monospace;font-size:.8rem;opacity:.9}
 
+/* Puestos top 3 */
+.place-1{color:#ffd54f;}   /* dorado */
+.place-2{color:#cfd8dc;}   /* plateado */
+.place-3{color:#ffb74d;}   /* bronce */
+
 /* Activos compactos */
 .active-row td{padding:4px 2px}
 .live{font-family:monospace;font-weight:700}
@@ -75,7 +80,7 @@ body.compact .panel{padding:5px 5px 6px}
       <label>Tema:
         <select id="themeSelect">
           <option value="theme-aqua">Acuático</option>
-          <option value="theme-contrast">Alto contraste</</option>
+          <option value="theme-contrast">Alto contraste</option>
           <option value="theme-dark" selected>Oscuro</option>
         </select>
       </label>
@@ -196,6 +201,17 @@ function formatClock(ts){var d=new Date(ts);return pad2(d.getHours())+':'+pad2(d
 function formatDuration(ms){if(ms<0)ms=0;var total=Math.floor(ms/1000);var m=Math.floor(total/60);var s=total%60;var c=Math.floor((ms%1000)/10);return pad2(m)+':'+pad2(s)+'.'+pad2(c);}
 function escapeHtml(str){return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function enableCompact(){document.body.classList.add('compact');}
+
+/* timestamp para nombre de archivo */
+function getTimestampString(){
+  var d=new Date();
+  return d.getFullYear().toString() +
+         pad2(d.getMonth()+1) +
+         pad2(d.getDate()) + "_" +
+         pad2(d.getHours()) +
+         pad2(d.getMinutes()) +
+         pad2(d.getSeconds());
+}
 
 /* ===== Tema ===== */
 themeSelect.addEventListener('change',function(){applyTheme(themeSelect.value);});
@@ -367,7 +383,6 @@ function computePlaces(){
   var totalStarted=0,totalFinished=0;
   var arr=[], l, s, sw;
 
-  // reset de place y armado de lista
   for(l=0;l<timesData.length;l++){
     for(s=0;s<timesData[l].length;s++){
       sw=timesData[l][s];
@@ -391,7 +406,7 @@ function computePlaces(){
 
 /* ===== Resumen (incluye splits y puesto) ===== */
 function renderSummary(){
-  computePlaces(); // actualiza puestos si corresponde
+  computePlaces();
 
   summaryBody.innerHTML='';
   var any=false;
@@ -404,10 +419,17 @@ function renderSummary(){
 
         var left=document.createElement('div'); left.className='summary-name'; left.appendChild(document.createTextNode(sw.name||'')); div.appendChild(left);
 
-        var right=document.createElement('div'); right.className='summary-time';
+        var right=document.createElement('div');
+        var timeSpan=document.createElement('span');
+        timeSpan.className='summary-time';
         var main = (sw.start&&sw.end)?formatDuration(sw.end-sw.start):'—';
         if(sw.place){ main = main + '  P' + sw.place; }
-        right.appendChild(document.createTextNode(main)); div.appendChild(right);
+        if(sw.place===1) timeSpan.className+=' place-1';
+        else if(sw.place===2) timeSpan.className+=' place-2';
+        else if(sw.place===3) timeSpan.className+=' place-3';
+        timeSpan.appendChild(document.createTextNode(main));
+        right.appendChild(timeSpan);
+        div.appendChild(right);
 
         summaryBody.appendChild(div);
 
@@ -472,11 +494,6 @@ function handleEndClick(e){
   setEndTime(l,s,Date.now()); renderActiveList(); renderSummary();
 }
 function handleSplitClick(e){
-  var l=parseInt(e.getAttribute ? e.getAttribute('data-lane') : e.target.getAttribute('data-lane'),10);
-}
-
-/* corregimos handleSplitClick real */
-function handleSplitClick(e){
   var l=parseInt(e.target.getAttribute('data-lane'),10), s=parseInt(e.target.getAttribute('data-swimmer'),10);
   var sw=timesData[l][s];
   if(sw.start!==null && sw.end===null){
@@ -526,10 +543,18 @@ exportCsvBtn.addEventListener('click',function(){
   }
   downloadFile(csv,'text/csv','resultados_natacion.csv');
 });
+
 exportHtmlBtn.addEventListener('click',function(){
-  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Resultados natación</title></head><body>';
-  html+='<h2>Resultados de natación</h2><table border="1" cellpadding="4" cellspacing="0">';
-  html+='<tr><th>And</th><th>Nombre</th><th>Dist</th><th>Salida</th><th>Fin</th><th>t</th><th>intervalos</th><th>Puesto</th></tr>';
+  var ts = getTimestampString();
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Resultados natación</title>' +
+           '<style>body{font-family:sans-serif;background:#f5f5f5;color:#222;margin:0;padding:16px;}' +
+           'h2{margin-top:0;}table{border-collapse:collapse;width:100%;background:#fff;}' +
+           'th,td{border:1px solid #ccc;padding:4px 6px;font-size:0.85rem;text-align:center;}' +
+           'th{background:#e0e0e0;} .place-1{color:#c79100;font-weight:bold;}' +
+           '.place-2{color:#607d8b;font-weight:bold;} .place-3{color:#af6b2c;font-weight:bold;}' +
+           '</style></head><body>';
+  html+='<h2>Resultados de natación</h2>';
+  html+='<table><tr><th>And</th><th>Nombre</th><th>Dist</th><th>Salida</th><th>Fin</th><th>Tiempo</th><th>Intervalos</th><th>Puesto</th></tr>';
   for(var l=0;l<timesData.length;l++){
     for(var s=0;s<timesData[l].length;s++){
       var sw=timesData[l][s];
@@ -538,12 +563,20 @@ exportHtmlBtn.addEventListener('click',function(){
       var durStr=(sw.start&&sw.end)?formatDuration(sw.end-sw.start):'';
       var ints='';
       if(sw.splits&&sw.start){var tmp=[];for(var k=0;k<sw.splits.length;k++){tmp.push(formatDuration(sw.splits[k]-sw.start));}ints=tmp.join(' | ');}
-      var placeStr=sw.place?sw.place:'';
-      html+='<tr><td>'+(l+1)+'</td><td>'+escapeHtml(sw.name||'')+'</td><td>'+(sw.distance||0)+'</td><td>'+startStr+'</td><td>'+endStr+'</td><td>'+durStr+'</td><td>'+escapeHtml(ints)+'</td><td>'+placeStr+'</td></tr>';
+      var placeStr=sw.place?sw.place:'';      
+      var placeClass='';
+      if(sw.place===1) placeClass='place-1';
+      else if(sw.place===2) placeClass='place-2';
+      else if(sw.place===3) placeClass='place-3';
+
+      html+='<tr><td>'+(l+1)+'</td><td>'+escapeHtml(sw.name||'')+'</td><td>'+(sw.distance||0)+'</td>' +
+            '<td>'+startStr+'</td><td>'+endStr+'</td><td>'+durStr+'</td>' +
+            '<td>'+escapeHtml(ints)+'</td>' +
+            '<td class="'+placeClass+'">'+placeStr+'</td></tr>';
     }
   }
-  html+='</table><p>Generado: '+new Date().toLocaleString()+'</p></body></html>';
-  downloadFile(html,'text/html','resultados_natacion.html');
+  html+='</table><p style="margin-top:8px;font-size:0.8rem;">Generado: '+new Date().toLocaleString()+'</p></body></html>';
+  downloadFile(html,'text/html','results_cronos_'+ts+'.html');
 });
 
 function getMaxSwimmersAcrossLanes(){var m=0;for(var l=0;l<timesData.length;l++){if(timesData[l].length>m)m=timesData[l].length;}return m;}
